@@ -1,0 +1,8 @@
+name: perfcapture
+channels:
+  - conda-forge
+dependencies:
+  - python
+  - numpy
+  - psutil
+  - pytest
