@@ -28,7 +28,13 @@ class Workload(abc.ABC):
     def dataset_already_exists(self) -> bool:
         """Returns True if the dataset is already on disk.
         """
-        return (
+        path_is_dir_which_is_not_empty = (
             self.path_to_dataset.exists() and
             self.path_to_dataset.is_dir() and
-            path_not_empty(self.path_to_dataset))
+            path_not_empty(self.path_to_dataset)
+        )
+        path_is_single_file = (
+            self.path_to_dataset.exists() and
+            not self.path_to_dataset.is_dir()
+        )
+        return path_is_dir_which_is_not_empty or path_is_single_file
