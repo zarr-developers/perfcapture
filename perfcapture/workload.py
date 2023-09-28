@@ -11,11 +11,12 @@ class Workload(abc.ABC):
     def prepare_dataset(self) -> None:
         """Override this method if your workload needs to prepare a local dataset.
         
-        The workload runner will call this method every time the workload runner runs.
-        If your dataset takes a long time to prepare then leave your disk,
-        and start your `prepare_dataset` method with a test to see if the dataset
-        already exists on disk.
-        
+        Every time the workload runner executes, it runs this pseudocode
+        before calling `run_workload`:
+
+            if not workload.dataset_already_exists():
+                workload.prepare_dataset()
+
         Store your dataset at `self.path_to_dataset`.
         """
         pass
