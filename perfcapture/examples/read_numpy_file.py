@@ -4,7 +4,7 @@ import tempfile
 import numpy as np
 
 
-class ReadNumpyFile:  # TODO: Should inherit from WorkLoad ABC.
+class ReadNumpyFile:  # TODO: Should inherit from Workload ABC.
     def before_each_run(self):
         """Create simple numpy file in a temp directory."""
         # Generate an array of random numbers
