@@ -5,6 +5,14 @@ from perfcapture.utils import path_not_empty
 
 
 class Workload(abc.ABC):
+    """To implement a new benchmark workload, inherit from `Workload`.
+    
+    Most folks will want to override just two methods:
+    
+    - prepare_dataset
+    - run_workload
+    """
+    
     def __init__(self, path_to_dataset: pathlib.Path):
         self.path_to_dataset = path_to_dataset
     
