@@ -1,12 +1,11 @@
-import os
-import tempfile
-
 import numpy as np
 
+from perfcapture.workload import Workload
 
-class ReadNumpyFile:  # TODO: Should inherit from Workload ABC.
-    def before_each_run(self):
-        """Create simple numpy file in a temp directory."""
+
+class ReadNumpyFile(Workload):
+    def prepare_dataset(self):
+        """Create simple numpy file."""
         # Generate an array of random numbers
         rng = np.random.default_rng()
         DTYPE = np.uint8
@@ -20,17 +19,10 @@ class ReadNumpyFile:  # TODO: Should inherit from Workload ABC.
         print("Created array", flush=True)
         
         # Save array to temporary file
-        fh, self.filename = tempfile.mkstemp()
-        os.close(fh)
-        with open(self.filename, mode="wb") as fh:
+        with open(self.path_to_dataset, mode="wb") as fh:
             np.save(fh, array)
     
-    def run(self):
+    def run_workload(self):
         """Load numpy file into RAM."""
         for _ in range(100):
-            np.load(self.filename)
-    
-    def after_each_run(self):
-        """Remove numpy file from temp directory."""
-        if os.path.isfile(self.filename):
-            os.remove(self.filename)
+            np.load(self.path_to_dataset)

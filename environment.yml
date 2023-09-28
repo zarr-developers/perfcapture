@@ -6,3 +6,4 @@ dependencies:
   - numpy
   - psutil
   - pytest
+  - typer
