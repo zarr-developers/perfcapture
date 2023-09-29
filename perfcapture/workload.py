@@ -4,6 +4,11 @@ import pathlib
 from perfcapture.utils import path_not_empty
 
 
+"""
+TODO: Workload and Dataset should be separate classes.
+This is so single Dataset can be used by multiple Workloads.
+"""
+
 class Workload(abc.ABC):
     """To implement a new benchmark workload, inherit from `Workload`.
     
