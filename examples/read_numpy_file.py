@@ -7,21 +7,9 @@ from perfcapture.workload import Workload
 class NumpyDataset(Dataset):
     def prepare(self) -> None:
         """Create simple numpy file."""
-        # Generate an array of random numbers
-        rng = np.random.default_rng()
-        DTYPE = np.uint8
-        low, high = np.iinfo(DTYPE).min, np.iinfo(DTYPE).max
-        array = rng.integers(
-            low=low, 
-            high=high, 
-            size=(100, 100, 100, 100),
-            dtype=DTYPE,
-            )
-        print("Created array", flush=True)
-        
-        # Save array to temporary file
+        array = _create_numpy_array()
         with open(self.path, mode="wb") as fh:
-            np.save(fh, array)    
+            np.save(fh, array)
     
 
 class ReadNumpyFile(Workload):
@@ -35,3 +23,11 @@ class ReadNumpyFile(Workload):
     @property
     def n_repeats(self) -> int:
         return 10
+
+
+def _create_numpy_array() -> np.ndarray:
+    """Generate an array of random numbers."""
+    DTYPE = np.uint8
+    low, high = np.iinfo(DTYPE).min, np.iinfo(DTYPE).max
+    rng = np.random.default_rng()
+    return rng.integers(low=low, high=high, size=(100, 100, 100, 100), dtype=DTYPE)
