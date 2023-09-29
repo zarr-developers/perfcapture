@@ -20,12 +20,18 @@ class NumpyDataset(Dataset):
         print("Created array", flush=True)
         
         # Save array to temporary file
-        with open(self.path_to_dataset, mode="wb") as fh:
+        with open(self.path, mode="wb") as fh:
             np.save(fh, array)    
     
 
 class ReadNumpyFile(Workload):
+    def init_dataset(self) -> Dataset:
+        return NumpyDataset()
+    
     def run(self):
         """Load numpy file into RAM."""
-        for _ in range(100):
-            np.load(self.dataset.path_to_dataset)
+        np.load(self.dataset.path)
+        
+    @property
+    def n_repeats(self) -> int:
+        return 10
