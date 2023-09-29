@@ -1,10 +1,11 @@
 import numpy as np
+from perfcapture.dataset import Dataset
 
 from perfcapture.workload import Workload
 
 
-class ReadNumpyFile(Workload):
-    def prepare_dataset(self):
+class NumpyDataset(Dataset):
+    def prepare(self) -> None:
         """Create simple numpy file."""
         # Generate an array of random numbers
         rng = np.random.default_rng()
@@ -20,9 +21,11 @@ class ReadNumpyFile(Workload):
         
         # Save array to temporary file
         with open(self.path_to_dataset, mode="wb") as fh:
-            np.save(fh, array)
+            np.save(fh, array)    
     
-    def run_workload(self):
+
+class ReadNumpyFile(Workload):
+    def run(self):
         """Load numpy file into RAM."""
         for _ in range(100):
-            np.load(self.path_to_dataset)
+            np.load(self.dataset.path_to_dataset)
