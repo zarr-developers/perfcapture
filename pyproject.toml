@@ -4,3 +4,10 @@ build-backend = 'setuptools.build_meta'
 
 [tool.ruff]
 line-length = 100
+
+# Enable all `pydocstyle` rules, limiting to those that adhere to the
+# Google convention via `convention = "google"`, below.
+select = ["D"]
+
+[tool.ruff.pydocstyle]
+convention = "google"
