@@ -9,6 +9,13 @@ app = typer.Typer()
 @app.command()
 def bench(
     workloads: Annotated[Optional[str], typer.Argument()] = None,
+    do_not_clear_cache: Annotated[
+        bool, 
+        typer.Option(
+            "--do-not-clear-cache",
+            help="Set this flag to prevent `vmtouch -e` being called before each benchmark.",
+            )
+        ] = False,
     ):
     pass
 
