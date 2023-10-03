@@ -9,14 +9,25 @@ class Dataset(abc.ABC):
     
     Datasets are read by `Workload`s.
     """
-    def set_path(self, base_data_path: pathlib.Path):
-        self.path = base_data_path / self.name
+    def set_path(self, base_data_path: pathlib.Path) -> None:
+        self._path = base_data_path / self.name
+        
+    @property
+    def path(self) -> pathlib.Path:
+        try:
+            return self._path
+        except Exception as e:
+            e.add_note("Run `Dataset.set_path()` before attempting to access `Dataset.path`!")
+            raise
 
     @property
     def name(self) -> str:
         """The name of this dataset.
         
         Must be unique amongst all the datasets used in the benchmark suite.
+        
+        The default implementation will use the name of the class. Override
+        this method if you wish to set a custom name.
         """
         return self.__class__.__name__
 

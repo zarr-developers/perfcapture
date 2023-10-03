@@ -1,8 +1,8 @@
 import abc
 import inspect
 import pathlib
-from perfcapture.dataset import Dataset
 
+from perfcapture.dataset import Dataset
 from perfcapture.utils import load_module_from_filename, path_not_empty
 
 
@@ -14,7 +14,10 @@ class Workload(abc.ABC):
         
     @abc.abstractmethod
     def init_dataset(self) -> Dataset:
-        """Initialises and returns a concrete Dataset objects."""
+        """Initialises and returns a concrete Dataset objects.
+        
+        Use this method to assign a Dataset object to this Workload.
+        """
 
     @abc.abstractmethod
     def run(self) -> dict[str, object]:

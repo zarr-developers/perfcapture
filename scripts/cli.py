@@ -3,11 +3,11 @@ import pathlib
 import shutil
 import subprocess
 import sys
-import typer
-from typing_extensions import Annotated
 from typing import Optional
 
+import typer
 from perfcapture.workload import discover_workloads
+from typing_extensions import Annotated
 
 app = typer.Typer()
 
@@ -60,7 +60,7 @@ def bench(
             " vmtouch. Or run with the --keep-cache option, which does not call vmtouch.")
     
     workloads = discover_workloads(recipe_path)
-    print(f"Found {len(workloads)} Workload(s) in {recipe_path}")
+    print(f"Found {len(workloads)} Workload class(es) in {recipe_path}")
     
     # Filter workloads (if necessary).
     if selected_workloads:
@@ -69,9 +69,11 @@ def bench(
     
     # Prepare datasets (if necessary).
     all_datasets = set([workload.dataset for workload in workloads])
+    print(f"Found {len(all_datasets)} Dataset object(s).")
     for dataset in all_datasets:
         dataset.set_path(data_path)
         if not dataset.already_exists():
+            print(f"Creating dataset for {dataset}")
             dataset.prepare()
     
     # Run the workloads!
