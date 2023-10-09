@@ -1,11 +1,10 @@
 import numpy as np
 from perfcapture.dataset import Dataset
-
 from perfcapture.workload import Workload
 
 
 class NumpyDataset(Dataset):
-    def prepare(self) -> None:
+    def create(self) -> None:
         """Create simple numpy file."""
         array = _create_numpy_array()
         with open(self.path, mode="wb") as fh:

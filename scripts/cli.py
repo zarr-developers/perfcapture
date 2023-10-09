@@ -74,7 +74,7 @@ def bench(
         dataset.set_path(data_path)
         if not dataset.already_exists():
             print(f"Creating dataset for {dataset}")
-            dataset.prepare()
+            dataset.create()
     
     # Run the workloads!
     for workload in workloads:

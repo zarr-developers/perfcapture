@@ -10,7 +10,7 @@ class Dataset(abc.ABC):
     Datasets are read by `Workload`s.
     """
     @abc.abstractmethod
-    def prepare(self) -> None:
+    def create(self) -> None:
         """Override this method if your workload needs to prepare a local dataset.
         
         Store your dataset at `self.path`.
@@ -18,7 +18,7 @@ class Dataset(abc.ABC):
         Every time the workload runner executes, it runs this pseudocode:
 
             if not dataset.already_exists():
-                dataset.prepare()
+                dataset.create()
         """
         pass
 
