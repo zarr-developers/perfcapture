@@ -12,7 +12,7 @@ class NumpyDataset(Dataset):
     
 
 class ReadNumpyFile(Workload):
-    def init_dataset(self) -> Dataset:
+    def init_datasets(self) -> Dataset:
         return NumpyDataset()
     
     def run(self):

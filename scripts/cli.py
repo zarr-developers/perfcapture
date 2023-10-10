@@ -68,7 +68,9 @@ def bench(
         workloads = filter(lambda workload: workload.name in selected_workloads, workloads)
     
     # Prepare datasets (if necessary).
-    all_datasets = set([workload.dataset for workload in workloads])
+    all_datasets = set()
+    for workload in workloads:
+        all_datasets.update(workload.datasets)
     print(f"Found {len(all_datasets)} Dataset object(s).")
     for dataset in all_datasets:
         dataset.set_path(data_path)
@@ -78,13 +80,14 @@ def bench(
     
     # Run the workloads!
     for workload in workloads:
-        print(f"Running {workload.name} {workload.n_repeats} times!", flush=True)
-        for _ in range(workload.n_repeats):
-            if not keep_cache:
-                p = subprocess.run(
-                    ["vmtouch", "-e", workload.dataset.path], capture_output=True, check=True)
-            workload.run()
-        print(f"    Finished running {workload.name} {workload.n_repeats} times!", flush=True)
+        for dataset in workload.datasets:
+            print(f"Running {workload.name} {workload.n_repeats} times on {dataset.path}!")
+            for _ in range(workload.n_repeats):
+                if not keep_cache:
+                    p = subprocess.run(
+                        ["vmtouch", "-e", dataset.path], capture_output=True, check=True)
+                workload.run(dataset_path=dataset.path)
+            print("    Finished!")
 
 if __name__ == "__main__":
     app()

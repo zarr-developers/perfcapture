@@ -10,17 +10,17 @@ class Workload(abc.ABC):
     """Inherit from `Workload` to implement a new benchmark workload."""
     
     def __init__(self):
-        self.dataset = self.init_dataset()
+        self.datasets = self.init_datasets()
         
     @abc.abstractmethod
-    def init_dataset(self) -> Dataset:
-        """Initialises and returns a concrete Dataset objects.
+    def init_datasets(self) -> tuple[Dataset]:
+        """Initialises and returns a tuple of concrete Dataset objects.
         
-        Use this method to assign a Dataset object to this Workload.
+        Use this method to assign Dataset objects to this Workload.
         """
 
     @abc.abstractmethod
-    def run(self) -> dict[str, object]:
+    def run(self, dataset_path: pathlib.Path) -> None:
         """Must be overridden to implement the workload."""
 
     @property

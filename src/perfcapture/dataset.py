@@ -11,7 +11,7 @@ class Dataset(abc.ABC):
     """
     @abc.abstractmethod
     def create(self) -> None:
-        """Override this method if your workload needs to prepare a local dataset.
+        """Override this method to define a new local dataset.
         
         Store your dataset at `self.path`.
         
@@ -20,7 +20,6 @@ class Dataset(abc.ABC):
             if not dataset.already_exists():
                 dataset.create()
         """
-        pass
 
     def already_exists(self) -> bool:
         """Returns True if the dataset is already on disk."""
