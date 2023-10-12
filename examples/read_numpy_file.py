@@ -12,8 +12,8 @@ class NumpyDataset(Dataset):
     
 
 class ReadNumpyFile(Workload):
-    def init_datasets(self) -> Dataset:
-        return NumpyDataset()
+    def init_datasets(self) -> tuple[Dataset]:
+        return (NumpyDataset(), )
     
     def run(self):
         """Load numpy file into RAM."""
