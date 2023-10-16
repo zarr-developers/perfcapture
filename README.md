@@ -9,7 +9,7 @@ Please note that `perfcapture` is a general-purpose benchmarking tool. Please se
 
 * Easily to define new workloads and datasets.
 * Orchestrate the creation of on-disk datasets (for benchmarking against).
-* (TODO) Parameterize workloads and dataset creation using a similar syntax to `pytest`.
+* (TODO) Allow users to select workloads and datasets at the command line.
 * (TODO) For each workload, measure a range of performance metrics including:
   - total runtime
   - total bytes of IO
