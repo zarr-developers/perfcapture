@@ -55,3 +55,17 @@ class Dataset(abc.ABC):
         except Exception as e:
             e.add_note("Run `Dataset.set_path()` before attempting to access `Dataset.path`!")
             raise
+
+
+def create_datasets_if_necessary(workloads: list, data_path: pathlib.Path) -> None:
+    all_datasets = set()
+    for workload in workloads:
+        all_datasets.update(workload.datasets)
+    print(f"Found {len(all_datasets)} Dataset object(s).")
+    for dataset in all_datasets:
+        dataset.set_path(data_path)
+        if dataset.already_exists():
+            print(f"{dataset.name} already exists.")
+        else:
+            print(f"Creating dataset for {dataset.name}")
+            dataset.create()

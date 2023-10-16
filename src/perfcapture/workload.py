@@ -1,9 +1,11 @@
 import abc
 import inspect
 import pathlib
+import subprocess
 
 from perfcapture.dataset import Dataset
 from perfcapture.metrics import MetricsForRun
+from perfcapture.timer import Timer
 from perfcapture.utils import load_module_from_filename, path_not_empty
 
 
@@ -61,4 +63,20 @@ def discover_workloads(recipe_path: pathlib.Path) -> list[Workload]:
         workloads.extend(workloads_from_py_file)
     return workloads
         
-        
+
+def run_workloads(workloads: list[Workload], keep_cache: bool) -> dict[str, Timer]:
+    all_timers: dict[str, Timer] = {}
+    for workload in workloads:
+        for dataset in workload.datasets:
+            print(f"Running {workload.name} {workload.n_repeats} times on {dataset.name}!")
+            timer = Timer()
+            for _ in range(workload.n_repeats):
+                if not keep_cache:
+                    p = subprocess.run(
+                        ["vmtouch", "-e", dataset.path], capture_output=True, check=True)
+                timer.start_timing_run()
+                metrics_for_run = workload.run(dataset_path=dataset.path)
+                timer.stop_timing_run(metrics_for_run)
+            print(f"  Finished!\n{timer}\n")
+            all_timers[f"{workload.name} {dataset.name}"] = timer
+    return all_timers
