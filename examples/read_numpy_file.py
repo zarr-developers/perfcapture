@@ -1,5 +1,8 @@
+from pathlib import Path
+
 import numpy as np
 from perfcapture.dataset import Dataset
+from perfcapture.metrics import MetricsForRun
 from perfcapture.workload import Workload
 
 
@@ -15,9 +18,12 @@ class ReadNumpyFile(Workload):
     def init_datasets(self) -> tuple[Dataset, ...]:
         return (NumpyDataset(), )
     
-    def run(self):
+    def run(self, dataset_path: Path) -> MetricsForRun:
         """Load numpy file into RAM."""
-        np.load(self.dataset.path)
+        arr = np.load(self.dataset.path)
+        return MetricsForRun(
+            nbytes_in_final_array=arr.nbytes,
+        )
         
     @property
     def n_repeats(self) -> int:

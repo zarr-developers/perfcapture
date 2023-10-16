@@ -3,6 +3,7 @@ import inspect
 import pathlib
 
 from perfcapture.dataset import Dataset
+from perfcapture.metrics import MetricsForRun
 from perfcapture.utils import load_module_from_filename, path_not_empty
 
 
@@ -20,7 +21,7 @@ class Workload(abc.ABC):
         """
 
     @abc.abstractmethod
-    def run(self, dataset_path: pathlib.Path) -> None:
+    def run(self, dataset_path: pathlib.Path) -> MetricsForRun:
         """Must be overridden to implement the workload."""
 
     @property
