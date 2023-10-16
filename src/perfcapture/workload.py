@@ -13,7 +13,7 @@ class Workload(abc.ABC):
         self.datasets = self.init_datasets()
         
     @abc.abstractmethod
-    def init_datasets(self) -> tuple[Dataset]:
+    def init_datasets(self) -> tuple[Dataset, ...]:
         """Initialises and returns a tuple of concrete Dataset objects.
         
         Use this method to assign Dataset objects to this Workload.
