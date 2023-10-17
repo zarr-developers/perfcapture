@@ -2,6 +2,7 @@
 import pathlib
 import shutil
 import sys
+import time
 from typing import Optional
 
 import typer
@@ -67,7 +68,11 @@ def bench(
         selected_workloads: list[str] = selected_workloads.split(" ")
         workloads = filter(lambda workload: workload.name in selected_workloads, workloads)
 
-    create_datasets_if_necessary(workloads, data_path)
+    created_at_least_1_dataset: bool = create_datasets_if_necessary(workloads, data_path)
+    if created_at_least_1_dataset:
+        print("Waiting for data to be flushed to disk...")
+        time.sleep(10)
+
     run_workloads(workloads, keep_cache)
 
 

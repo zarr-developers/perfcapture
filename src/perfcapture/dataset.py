@@ -57,11 +57,16 @@ class Dataset(abc.ABC):
             raise
 
 
-def create_datasets_if_necessary(workloads: list, data_path: pathlib.Path) -> None:
+def create_datasets_if_necessary(workloads: list, data_path: pathlib.Path) -> bool:
+    """Create datasets if they do not already exist.
+    
+    Returns True if it created any datasets.
+    """
     all_datasets = set()
     for workload in workloads:
         all_datasets.update(workload.datasets)
     print(f"Found {len(all_datasets)} Dataset object(s).")
+    created_at_least_1_dataset = False
     for dataset in all_datasets:
         dataset.set_path(data_path)
         if dataset.already_exists():
@@ -69,3 +74,5 @@ def create_datasets_if_necessary(workloads: list, data_path: pathlib.Path) -> No
         else:
             print(f"Creating dataset for {dataset.name}")
             dataset.create()
+            created_at_least_1_dataset = True
+    return created_at_least_1_dataset
