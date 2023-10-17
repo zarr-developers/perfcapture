@@ -61,7 +61,11 @@ def load_workloads_from_filename(py_filename: pathlib.Path) -> list[Workload]:
     return workloads
 
     
-def discover_workloads(recipe_path: pathlib.Path) -> list[Workload]:
+def discover_workloads(recipe_path: pathlib.Path) -> list[Workload]:    
+    # First, load any dataset modules, so they're available for the workload modules:
+    for py_filename in recipe_path.glob("*dataset*.py"):
+        workloads_from_py_file = load_workloads_from_filename(py_filename)
+
     workloads = []
     for py_filename in recipe_path.glob("*.py"):
         workloads_from_py_file = load_workloads_from_filename(py_filename)

@@ -73,6 +73,8 @@ def bench(
     if selected_workloads:
         selected_workloads: list[str] = selected_workloads.split(" ")
         workloads = filter(lambda workload: workload.name in selected_workloads, workloads)
+        workloads = list(workloads)
+        print("Workloads after filtering: ", workloads)
 
     created_at_least_1_dataset: bool = create_datasets_if_necessary(workloads, data_path)
     if created_at_least_1_dataset:

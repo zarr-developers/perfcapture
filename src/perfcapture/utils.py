@@ -4,6 +4,7 @@ import importlib.util
 import pathlib
 import sys
 
+
 def path_not_empty(path: pathlib.Path) -> bool:
     """Returns True if `path` is not empty."""
     # If `path` contains just a single entry then return True.
