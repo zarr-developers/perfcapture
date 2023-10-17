@@ -108,7 +108,7 @@ class DiskIO(_PerfCounterABC):
         self._data_per_run.loc[metrics_for_run.run_id] = disk_io_counters_diff
     
     @classmethod
-    def _get_disk_io_counters_as_series(self) -> pd.Series:
+    def _get_disk_io_counters_as_series(cls) -> pd.Series:
         counters: namedtuple = psutil.disk_io_counters()
         return pd.Series(counters._asdict())
     
