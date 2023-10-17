@@ -5,6 +5,7 @@ import sys
 import time
 from typing import Optional
 
+import pandas as pd
 import typer
 from perfcapture.dataset import create_datasets_if_necessary
 from perfcapture.workload import discover_workloads, run_workloads
@@ -24,6 +25,11 @@ def bench(
         typer.Option(help=(
             "The path containing the code which defines the Workloads and Datasets."))
     ] = pathlib.Path("."),
+    csv_filename: Annotated[
+        pathlib.Path,
+        typer.Option(help=(
+            "To filename to save results to."))
+    ] = pathlib.Path("results.csv"),
     selected_workloads: Annotated[
         Optional[str], 
         typer.Option(help=(
@@ -73,7 +79,8 @@ def bench(
         print("Waiting for data to be flushed to disk...")
         time.sleep(10)
 
-    run_workloads(workloads, keep_cache)
+    all_results: pd.DataFrame = run_workloads(workloads, keep_cache)
+    all_results.to_csv(csv_filename)
 
 
 if __name__ == "__main__":
