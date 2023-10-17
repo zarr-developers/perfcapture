@@ -28,7 +28,7 @@ class Timer:
         return "  Runtime: mean = {:.3f} seconds; std = {:.3f}".format(
             np.mean(self.seconds_per_run),
             np.std(self.seconds_per_run)
-        ) + "\n  Gigabytes per second: mean = {:.3f} GB/s; std = {:.3f}".format(
+        ) + "\n  Bandwidth to numpy array: mean = {:.3f} GB/s; std = {:.3f}".format(
             np.mean(self.gigabytes_per_second_per_run),
             np.std(self.gigabytes_per_second_per_run),
         )
