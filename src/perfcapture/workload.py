@@ -5,7 +5,7 @@ import subprocess
 
 from perfcapture.dataset import Dataset
 from perfcapture.metrics import MetricsForRun
-from perfcapture.timer import Timer
+from perfcapture.performance_counters import CounterManager
 from perfcapture.utils import load_module_from_filename, path_not_empty
 
 
@@ -64,19 +64,22 @@ def discover_workloads(recipe_path: pathlib.Path) -> list[Workload]:
     return workloads
         
 
-def run_workloads(workloads: list[Workload], keep_cache: bool) -> dict[str, Timer]:
-    all_timers: dict[str, Timer] = {}
+def run_workloads(
+    workloads: list[Workload],
+    keep_cache: bool
+    ) -> dict[tuple[str, str], CounterManager]:
+    all_timers: dict[tuple[str, str], CounterManager] = {}
     for workload in workloads:
         for dataset in workload.datasets:
             print(f"Running {workload.name} {workload.n_repeats} times on {dataset.name}!")
-            timer = Timer()
+            perf_counters = CounterManager()
             for _ in range(workload.n_repeats):
                 if not keep_cache:
                     p = subprocess.run(
                         ["vmtouch", "-e", dataset.path], capture_output=True, check=True)
-                timer.start_timing_run()
+                perf_counters.start_timing_run()
                 metrics_for_run = workload.run(dataset_path=dataset.path)
-                timer.stop_timing_run(metrics_for_run)
-            print(f"  Finished!\n{timer}\n")
-            all_timers[f"{workload.name} {dataset.name}"] = timer
+                perf_counters.stop_timing_run(metrics_for_run)
+            print(f"  Finished!\n{perf_counters}\n")
+            all_timers[(workload.name, dataset.name)] = perf_counters
     return all_timers
