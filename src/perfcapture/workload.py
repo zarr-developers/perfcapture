@@ -3,9 +3,11 @@ import inspect
 import pathlib
 import subprocess
 
+import pandas as pd
+
 from perfcapture.dataset import Dataset
 from perfcapture.metrics import MetricsForRun
-from perfcapture.performance_counters import CounterManager
+from perfcapture.performance_counters import PerfCounterManager
 from perfcapture.utils import load_module_from_filename, path_not_empty
 
 
@@ -24,20 +26,23 @@ class Workload(abc.ABC):
 
     @abc.abstractmethod
     def run(self, dataset_path: pathlib.Path) -> MetricsForRun:
-        """Must be overridden to implement the workload."""
+        """Run this workload once against a specific dataset.
+        
+        Must be overridden to implement the workload.
+        """
 
     @property
     def name(self) -> str:
-        """The name of this workload.
+        """Return the name of this workload.
         
         Must be unique amongst all the workloads used in this benchmark suite.
         """
         return self.__class__.__name__
     
     @property
-    def n_repeats(self) -> int:
+    def n_runs(self) -> int:
         """The number of times to repeat this workload."""
-        return 1
+        return 3
 
 
 def load_workloads_from_filename(py_filename: pathlib.Path) -> list[Workload]:
@@ -67,19 +72,25 @@ def discover_workloads(recipe_path: pathlib.Path) -> list[Workload]:
 def run_workloads(
     workloads: list[Workload],
     keep_cache: bool
-    ) -> dict[tuple[str, str], CounterManager]:
-    all_timers: dict[tuple[str, str], CounterManager] = {}
+    ) -> pd.DataFrame:
+    all_results = []
     for workload in workloads:
         for dataset in workload.datasets:
-            print(f"Running {workload.name} {workload.n_repeats} times on {dataset.name}!")
-            perf_counters = CounterManager()
-            for _ in range(workload.n_repeats):
+            print(f"Running {workload.name} {workload.n_runs} times on {dataset.name}!")
+            perf_counter = PerfCounterManager()
+            for i in range(workload.n_runs):
+                print(f"Run {i+1} of {workload.n_runs}...")
                 if not keep_cache:
                     p = subprocess.run(
                         ["vmtouch", "-e", dataset.path], capture_output=True, check=True)
-                perf_counters.start_timing_run()
+                perf_counter.start_timing_run()
                 metrics_for_run = workload.run(dataset_path=dataset.path)
-                perf_counters.stop_timing_run(metrics_for_run)
-            print(f"  Finished!\n{perf_counters}\n")
-            all_timers[(workload.name, dataset.name)] = perf_counters
-    return all_timers
+                perf_counter.stop_timing_run(metrics_for_run)
+            print(f"Finished!\n{perf_counter}\n")
+
+            # Store results
+            results = perf_counter.get_results().reset_index()
+            results['workload'] = workload.name
+            results['dataset'] = dataset.name
+            all_results.append(results)
+    return pd.concat(all_results).set_index(["workload", "dataset", "run_ID"])

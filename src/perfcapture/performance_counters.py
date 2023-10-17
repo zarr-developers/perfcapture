@@ -13,30 +13,37 @@ _NAME_MEAN_STD_STRING = "{:>18}: mean = {:>9.3f}; std = {:>9.3f}\n"
 
 
 class _PerfCounterABC(abc.ABC):
+    """PerfCounterABC subclasses define a single performance counter.
+    
+    Usage:
+    1. Init PerfCounter subclass when we start benchmarking a specific
+       combination of <Workload> and <Dataset>.
+    2. Call `start_timing_iteration()` at the start of each iteration.
+    3. Call `stop_timing_iteration()` at the end of each iteration.
+    4. Call `get_results()` at the end of the `run`, to get a `pd.DataFrame` of results.
+    """
     def __init__(self) -> None:
-        self._data_per_run = pd.Series(name=self.name)
+        self._data_per_run = pd.DataFrame(columns=[self.name])
+        self._data_per_run.index.name = "run_ID"
         
     def start_timing_run(self) -> None:
         pass
-        
+
     @abc.abstractmethod
-    def stop_timing_run(self, metrics_for_run: MetricsForRun) -> None:
+    def stop_timing_run(self, metrics_for_iteration: MetricsForRun) -> None:
         pass
+    
+    def get_results(self) -> pd.DataFrame:
+        """Return a DataFrame where columns are counters, and rows are runs."""
+        return self._data_per_run
 
     @property
     def name(self) -> str:
         return self.__class__.__name__
-    
-    def __str__(self) -> str:
-        return _NAME_MEAN_STD_STRING.format(
-            self.name,
-            self._data_per_run.mean(),
-            self._data_per_run.std(),
-        )
 
 
 @dataclass
-class CounterManager:
+class PerfCounterManager:
     """Simple manager for multiple performance counters."""
     counters: list[_PerfCounterABC] = field(
         default_factory=lambda: [Runtime(), BandwidthToNumpy(), DiskIO()]
@@ -54,10 +61,20 @@ class CounterManager:
         # Many counters require a runtime. So compute the runtime once, here.
         metrics_for_run.total_secs = self._timer.total_secs_elapsed()
         metrics_for_run.run_id = self._run_id
-        [counter.stop_timing_run(metrics_for_run) for counter in self.counters]       
+        [counter.stop_timing_run(metrics_for_run) for counter in self.counters]
+    
+    def get_results(self) -> pd.DataFrame:
+        return pd.concat(
+            [counter.get_results() for counter in self.counters],
+            axis="columns",
+            )
+        
+    def get_summary_of_results(self) -> pd.DataFrame:
+        results = self.get_results()
+        return pd.DataFrame({'mean': results.mean(), 'std': results.std()})
     
     def __str__(self) -> str:
-        return "".join(["{}".format(counter) for counter in self.counters])
+        return str(self.get_summary_of_results())
 
 
 class Runtime(_PerfCounterABC):
@@ -84,9 +101,10 @@ class DiskIO(_PerfCounterABC):
     def __init__(self) -> None:
         columns = (
             psutil._pslinux.sdiskio._fields + # superset of _common.sdiskio._fields
-            ('read_iops', 'write_iops', 'read_bytes_per_sec', 'write_bytes_per_sec')
+            ('read_IOPS', 'write_IOPS', 'read GB/sec from disk', 'write GB/sec to disk')
         )
         self._data_per_run = pd.DataFrame(dtype=np.int64, columns=columns)
+        self._data_per_run.index.name = "run_ID"
     
     def start_timing_run(self) -> None:
         self._disk_counters_at_start_of_run = self._get_disk_io_counters_as_series()
@@ -98,12 +116,12 @@ class DiskIO(_PerfCounterABC):
         
         # Compute counters which depend on runtime:
         total_secs = metrics_for_run.total_secs
-        disk_io_counters_diff['read_iops'] = disk_io_counters_diff['read_count'] / total_secs
-        disk_io_counters_diff['write_iops'] = disk_io_counters_diff['write_count'] / total_secs
-        disk_io_counters_diff['read_bytes_per_sec'] = (
-            disk_io_counters_diff['read_bytes'] / total_secs)
-        disk_io_counters_diff['write_bytes_per_sec'] = (
-            disk_io_counters_diff['write_bytes'] / total_secs)
+        disk_io_counters_diff['read_IOPS'] = disk_io_counters_diff['read_count'] / total_secs
+        disk_io_counters_diff['write_IOPS'] = disk_io_counters_diff['write_count'] / total_secs
+        disk_io_counters_diff['read GB/sec from disk'] = (
+            (disk_io_counters_diff['read_bytes'] / 1E9) / total_secs)
+        disk_io_counters_diff['write GB/sec to disk'] = (
+            (disk_io_counters_diff['write_bytes'] / 1E9) / total_secs)
         
         self._data_per_run.loc[metrics_for_run.run_id] = disk_io_counters_diff
     
@@ -116,18 +134,8 @@ class DiskIO(_PerfCounterABC):
     def name(self) -> str:
         return "Disk IO"
     
-    def __str__(self) -> str:
-        string = ""
-        for col_name in ["read_iops", "write_iops", "read_bytes_per_sec", "write_bytes_per_sec"]:
-            data = self._data_per_run[col_name]
-            
-            if "bytes" in col_name:
-                col_name = col_name.replace("bytes", "GB")
-                data = data / 1E9
-            
-            string += _NAME_MEAN_STD_STRING.format(col_name, data.mean(), data.std())
-        
-        return string
+    def get_results(self) -> pd.DataFrame:
+        return self._data_per_run[["read_IOPS", "write_IOPS", "read_GB_per_sec", "write_GB_per_sec"]]
 
 
 class _BasicTimer:

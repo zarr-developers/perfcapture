@@ -26,7 +26,7 @@ class ReadNumpyFile(Workload):
         )
         
     @property
-    def n_repeats(self) -> int:
+    def n_runs(self) -> int:
         return 10
 
 
