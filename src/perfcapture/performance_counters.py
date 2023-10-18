@@ -104,6 +104,7 @@ class DiskIO(_PerfCounterABC):
             ('read_IOPS', 'write_IOPS', 'read GB/sec from disk', 'write GB/sec to disk',
              'read GB', 'write GB')
         )
+        columns = tuple(col for col in columns if col not in ('read_bytes', 'write_bytes'))
         self._data_per_run = pd.DataFrame(dtype=np.int64, columns=columns)
         self._data_per_run.index.name = "run_ID"
     
@@ -142,7 +143,7 @@ class DiskIO(_PerfCounterABC):
         return "Disk IO"
     
     def get_results(self) -> pd.DataFrame:
-        return self._data_per_run.dropna()
+        return self._data_per_run
 
 
 class _BasicTimer:
