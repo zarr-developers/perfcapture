@@ -120,7 +120,8 @@ class DiskIO(_PerfCounterABC):
              "read GB", "write GB", "read_time_ms", "write_time_ms")
         )
         columns = tuple(
-            col for col in columns if col not in ("read_bytes", "write_bytes"))
+            col for col in columns if col not in 
+            ("read_bytes", "write_bytes", "read_time", "write_time", "busy_time"))
         self._data_per_run = pd.DataFrame(dtype=np.int64, columns=columns)
         self._data_per_run.index.name = "run_ID"
     
