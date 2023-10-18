@@ -142,7 +142,7 @@ class DiskIO(_PerfCounterABC):
         return "Disk IO"
     
     def get_results(self) -> pd.DataFrame:
-        return self._data_per_run
+        return self._data_per_run.dropna()
 
 
 class _BasicTimer:
