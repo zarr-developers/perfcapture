@@ -81,7 +81,7 @@ def run_workloads(
     for workload in workloads:
         for dataset in workload.datasets:
             print(f"Running {workload.name} {workload.n_runs} times on {dataset.name}!")
-            perf_counter = PerfCounterManager()
+            perf_counter = PerfCounterManager(dataset.path)
             for i in range(workload.n_runs):
                 print(f"Run {i+1} of {workload.n_runs}...")
                 if not keep_cache:
