@@ -20,7 +20,7 @@ class ReadNumpyFile(Workload):
     
     def run(self, dataset_path: Path) -> MetricsForRun:
         """Load numpy file into RAM."""
-        arr = np.load(self.dataset.path)
+        arr = np.load(dataset_path)
         return MetricsForRun(
             nbytes_in_final_array=arr.nbytes,
         )
