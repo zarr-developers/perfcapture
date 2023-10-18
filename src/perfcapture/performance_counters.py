@@ -117,7 +117,8 @@ class DiskIO(_PerfCounterABC):
             psutil._pslinux.sdiskio._fields + # superset of _common.sdiskio._fields
             ("read_IOPS", "write_IOPS", "avg read GB/sec", "avg write GB/sec",
              "read GB / read_time_secs", "write GB / write_time_secs",
-             "read GB", "write GB", "read_time_ms", "write_time_ms")
+             "read GB", "write GB",
+             "read_time_secs", "write_time_secs", "busy_time_secs")
         )
         columns = tuple(
             col for col in columns if col not in 
@@ -132,25 +133,23 @@ class DiskIO(_PerfCounterABC):
         disk_io_counters_at_end_of_run = self._get_disk_io_counters_as_series()
         count_diff = disk_io_counters_at_end_of_run - self._disk_counters_at_start_of_run
 
-        # Convert bytes to gigabytes:
+        # Convert bytes to gigabytes, and milliseconds to secs:
         for direction in ("read", "write"):
             count_diff[f"{direction} GB"] = count_diff[f"{direction}_bytes"] / 1E9
+            count_diff[f"{direction}_time_secs"] = count_diff[f"{direction}_time"] / 1E3
             del count_diff[f"{direction}_bytes"]
-
-        # Append time unit:
-        count_diff = count_diff.rename({
-            "read_time": "read_time_ms",
-            "write_time": "write_time_ms",
-            "busy_time": "busy_time_ms",
-            })
+            del count_diff[f"{direction}_time"]
+        if "busy_time" in count_diff:
+            count_diff[f"busy_time_secs"] = count_diff[f"busy_time"] / 1E3
+            del count_diff["busy_time"]
 
         # Compute {read,write} GB / {read,write}_time(secs)
         for direction in ("read", "write"):
             # Protect against divide-by-zero (if <direction>_time is zero):
             new_key = f"{direction} GB / {direction}_time_secs"
-            if count_diff[f"{direction}_time_ms"] > 0:
+            if count_diff[f"{direction}_time_secs"] > 0:
                 count_diff[new_key] = (
-                    count_diff[f"{direction} GB"] / (count_diff[f"{direction}_time_ms"] / 1E3))
+                    count_diff[f"{direction} GB"] / count_diff[f"{direction}_time_secs"])
             else:
                 count_diff[new_key] = 0
 
