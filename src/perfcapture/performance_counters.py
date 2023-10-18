@@ -101,7 +101,8 @@ class DiskIO(_PerfCounterABC):
     def __init__(self) -> None:
         columns = (
             psutil._pslinux.sdiskio._fields + # superset of _common.sdiskio._fields
-            ('read_IOPS', 'write_IOPS', 'read GB/sec from disk', 'write GB/sec to disk')
+            ('read_IOPS', 'write_IOPS', 'read GB/sec from disk', 'write GB/sec to disk',
+             'read GB', 'write GB')
         )
         self._data_per_run = pd.DataFrame(dtype=np.int64, columns=columns)
         self._data_per_run.index.name = "run_ID"
@@ -114,15 +115,21 @@ class DiskIO(_PerfCounterABC):
         disk_io_counters_diff = (
             disk_io_counters_at_end_of_run - self._disk_counters_at_start_of_run)
         
+        # Convert bytes to GB:
+        disk_io_counters_diff['read GB'] = disk_io_counters_diff['read_bytes'] / 1E9
+        disk_io_counters_diff['write GB'] = disk_io_counters_diff['write_bytes'] / 1E9
+        del disk_io_counters_diff['read_bytes']
+        del disk_io_counters_diff['write_bytes']
+
         # Compute counters which depend on runtime:
         total_secs = metrics_for_run.total_secs
         disk_io_counters_diff['read_IOPS'] = disk_io_counters_diff['read_count'] / total_secs
         disk_io_counters_diff['write_IOPS'] = disk_io_counters_diff['write_count'] / total_secs
         disk_io_counters_diff['read GB/sec from disk'] = (
-            (disk_io_counters_diff['read_bytes'] / 1E9) / total_secs)
+            disk_io_counters_diff['read GB'] / total_secs)
         disk_io_counters_diff['write GB/sec to disk'] = (
-            (disk_io_counters_diff['write_bytes'] / 1E9) / total_secs)
-        
+            disk_io_counters_diff['write GB'] / total_secs)
+
         self._data_per_run.loc[metrics_for_run.run_id] = disk_io_counters_diff
     
     @classmethod
