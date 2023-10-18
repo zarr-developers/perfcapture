@@ -116,10 +116,11 @@ class DiskIO(_PerfCounterABC):
             # https://www.kernel.org/doc/Documentation/iostats.txt
             psutil._pslinux.sdiskio._fields + # superset of _common.sdiskio._fields
             ("read_IOPS", "write_IOPS", "avg read GB/sec", "avg write GB/sec",
-             "read GB / read_time(secs)", "write GB / write_time(secs)",
-             "read GB", "write GB")
+             "read GB / read_time_secs", "write GB / write_time_secs",
+             "read GB", "write GB", "read_time_ms", "write_time_ms")
         )
-        columns = tuple(col for col in columns if col not in ("read_bytes", "write_bytes"))
+        columns = tuple(
+            col for col in columns if col not in ("read_bytes", "write_bytes"))
         self._data_per_run = pd.DataFrame(dtype=np.int64, columns=columns)
         self._data_per_run.index.name = "run_ID"
     
@@ -129,24 +130,35 @@ class DiskIO(_PerfCounterABC):
     def stop_timing_run(self, metrics_for_run: MetricsForRun) -> None:
         disk_io_counters_at_end_of_run = self._get_disk_io_counters_as_series()
         count_diff = disk_io_counters_at_end_of_run - self._disk_counters_at_start_of_run
-        
-        # Convert bytes to GB:
-        count_diff["read GB"] = count_diff["read_bytes"] / 1E9
-        count_diff["write GB"] = count_diff["write_bytes"] / 1E9
-        del count_diff["read_bytes"]
-        del count_diff["write_bytes"]
-        
-        # {read,write} GB / {read,write}_time
+
+        # Convert bytes to gigabytes:
         for direction in ("read", "write"):
-            count_diff[f"{direction} GB / {direction}_time(secs)"] = (
-                count_diff[f"{direction} GB"] / (count_diff[f"{direction}_time"] / 1E3))
+            count_diff[f"{direction} GB"] = count_diff[f"{direction}_bytes"] / 1E9
+            del count_diff[f"{direction}_bytes"]
+
+        # Append time unit:
+        count_diff.rename(index={
+            "read_time": "read_time_ms",
+            "write_time": "write_time_ms",
+            "busy_time": "busy_time_ms",
+            })
+
+        # Compute {read,write} GB / {read,write}_time(secs)
+        for direction in ("read", "write"):
+            # Protect against divide-by-zero (if <direction>_time is zero):
+            new_key = f"{direction} GB / {direction}_time_secs"
+            if count_diff[f"{direction}_time_ms"] > 0:
+                count_diff[new_key] = (
+                    count_diff[f"{direction} GB"] / (count_diff[f"{direction}_time_ms"] / 1E3))
+            else:
+                count_diff[new_key] = 0
 
         # Compute counters which depend on runtime:
         total_secs = metrics_for_run.total_secs
         count_diff["read_IOPS"] = count_diff["read_count"] / total_secs
         count_diff["write_IOPS"] = count_diff["write_count"] / total_secs
-        count_diff["read GB/sec"] = count_diff["read GB"] / total_secs
-        count_diff["write GB/sec"] = count_diff["write GB"] / total_secs
+        count_diff["avg read GB/sec"] = count_diff["read GB"] / total_secs
+        count_diff["avg write GB/sec"] = count_diff["write GB"] / total_secs
 
         self._data_per_run.loc[metrics_for_run.run_id] = count_diff
     
