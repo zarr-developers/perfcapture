@@ -98,13 +98,28 @@ class BandwidthToNumpy(_PerfCounterABC):
 
 
 class DiskIO(_PerfCounterABC):
+    """Record performance of disks.
+    
+    Note that this records performance of all disks on this machine,
+    used by all processes. So, if other processes are using any disk
+    (even a different disk to the disk that you're benchmarking) then
+    you'll get misleading results!
+    
+    For more information on the fields recorded, please see:
+    - https://psutil.readthedocs.io/en/latest/#psutil.disk_io_counters
+    - https://www.kernel.org/doc/Documentation/iostats.txt
+    """
     def __init__(self) -> None:
         columns = (
+            # See:
+            # https://psutil.readthedocs.io/en/latest/#psutil.disk_io_counters
+            # https://www.kernel.org/doc/Documentation/iostats.txt
             psutil._pslinux.sdiskio._fields + # superset of _common.sdiskio._fields
-            ('read_IOPS', 'write_IOPS', 'read GB/sec from disk', 'write GB/sec to disk',
-             'read GB', 'write GB')
+            ("read_IOPS", "write_IOPS", "avg read GB/sec", "avg write GB/sec",
+             "read GB / read_time(secs)", "write GB / write_time(secs)",
+             "read GB", "write GB")
         )
-        columns = tuple(col for col in columns if col not in ('read_bytes', 'write_bytes'))
+        columns = tuple(col for col in columns if col not in ("read_bytes", "write_bytes"))
         self._data_per_run = pd.DataFrame(dtype=np.int64, columns=columns)
         self._data_per_run.index.name = "run_ID"
     
@@ -113,25 +128,27 @@ class DiskIO(_PerfCounterABC):
         
     def stop_timing_run(self, metrics_for_run: MetricsForRun) -> None:
         disk_io_counters_at_end_of_run = self._get_disk_io_counters_as_series()
-        disk_io_counters_diff = (
-            disk_io_counters_at_end_of_run - self._disk_counters_at_start_of_run)
+        count_diff = disk_io_counters_at_end_of_run - self._disk_counters_at_start_of_run
         
         # Convert bytes to GB:
-        disk_io_counters_diff['read GB'] = disk_io_counters_diff['read_bytes'] / 1E9
-        disk_io_counters_diff['write GB'] = disk_io_counters_diff['write_bytes'] / 1E9
-        del disk_io_counters_diff['read_bytes']
-        del disk_io_counters_diff['write_bytes']
+        count_diff["read GB"] = count_diff["read_bytes"] / 1E9
+        count_diff["write GB"] = count_diff["write_bytes"] / 1E9
+        del count_diff["read_bytes"]
+        del count_diff["write_bytes"]
+        
+        # {read,write} GB / {read,write}_time
+        for direction in ("read", "write"):
+            count_diff[f"{direction} GB / {direction}_time(secs)"] = (
+                count_diff[f"{direction} GB"] / (count_diff[f"{direction}_time"] / 1E3))
 
         # Compute counters which depend on runtime:
         total_secs = metrics_for_run.total_secs
-        disk_io_counters_diff['read_IOPS'] = disk_io_counters_diff['read_count'] / total_secs
-        disk_io_counters_diff['write_IOPS'] = disk_io_counters_diff['write_count'] / total_secs
-        disk_io_counters_diff['read GB/sec from disk'] = (
-            disk_io_counters_diff['read GB'] / total_secs)
-        disk_io_counters_diff['write GB/sec to disk'] = (
-            disk_io_counters_diff['write GB'] / total_secs)
+        count_diff["read_IOPS"] = count_diff["read_count"] / total_secs
+        count_diff["write_IOPS"] = count_diff["write_count"] / total_secs
+        count_diff["read GB/sec"] = count_diff["read GB"] / total_secs
+        count_diff["write GB/sec"] = count_diff["write GB"] / total_secs
 
-        self._data_per_run.loc[metrics_for_run.run_id] = disk_io_counters_diff
+        self._data_per_run.loc[metrics_for_run.run_id] = count_diff
     
     @classmethod
     def _get_disk_io_counters_as_series(cls) -> pd.Series:
