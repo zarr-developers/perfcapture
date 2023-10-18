@@ -135,8 +135,7 @@ class DiskIO(_PerfCounterABC):
         return "Disk IO"
     
     def get_results(self) -> pd.DataFrame:
-        return self._data_per_run[
-            ["read_IOPS", "write_IOPS", "read GB/sec from disk", "write GB/sec to disk"]]
+        return self._data_per_run
 
 
 class _BasicTimer:
