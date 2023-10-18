@@ -137,7 +137,7 @@ class DiskIO(_PerfCounterABC):
             del count_diff[f"{direction}_bytes"]
 
         # Append time unit:
-        count_diff.rename(columns={
+        count_diff = count_diff.rename({
             "read_time": "read_time_ms",
             "write_time": "write_time_ms",
             "busy_time": "busy_time_ms",
