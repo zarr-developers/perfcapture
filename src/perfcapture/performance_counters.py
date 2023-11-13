@@ -212,7 +212,7 @@ def _get_partition_name_from_path(dataset_path: pathlib.Path) -> str:
     partitions: list[psutil._common.sdiskpart] = psutil.disk_partitions()
     for partition in partitions:
         if pathlib.Path(partition.mountpoint) == dataset_mount_point:
-            return pathlib.Path(partition.device).parts[-1]
+            return pathlib.Path(partition.device).resolve().parts[-1]
     raise RuntimeError(f"Could not find partition for {dataset_path}")
             
         
