@@ -36,6 +36,12 @@ def bench(
             "Space-separated list of workloads to run. If not set, all workloads found in"
             " recipe_path will be run. Use the `name` of each workload."))
         ] = None,
+    selected_datasets: Annotated[
+        Optional[str], 
+        typer.Option(help=(
+            "Space-separated list of datasets to test. If not set, all datasets found in"
+            " recipe_path will be run. Use the `name` of each dataset."))
+        ] = None,
     keep_cache: Annotated[
         bool, 
         typer.Option(
@@ -75,6 +81,15 @@ def bench(
         workloads = filter(lambda workload: workload.name in selected_workloads, workloads)
         workloads = list(workloads)
         print("Workloads after filtering: ", workloads)
+
+    # Filter datasets (if necessary).
+    if selected_datasets:
+        selected_datasets: list[str] = selected_datasets.split(" ")
+        for workload in workloads:
+            datasets = workload.datasets
+            print([dataset.name for dataset in datasets])
+            datasets = filter(lambda dataset: dataset.name in selected_datasets, datasets)
+            workload.datasets = tuple(datasets)
 
     created_at_least_1_dataset: bool = create_datasets_if_necessary(workloads, data_path)
     if created_at_least_1_dataset:
